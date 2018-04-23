@@ -7,29 +7,53 @@ public class grephy {
 
     public static void main (String[] args){
 
+        boolean error = false;
+
         if (args.length > 0){
             int i = 0;
             while(i < args.length){
                 if(args[i].equals("-n")){
-                    i++;
-                    NFA_FILE = args[i];
+                    if(REGEX == null && INPUT_FILE == null){
+                        i++;
+                        NFA_FILE = args[i];
+                    } else {
+                        error = true;
+                        // TODO: WRONG ARGUMENTS ORDER ERROR
+                    }
                 } else if(args[i].equals("-d")){
-                    i++;
-                    DFA_FILE = args[i];
+                    if(REGEX == null && INPUT_FILE == null){
+                        i++;
+                        DFA_FILE = args[i];
+                    } else {
+                        error = true;
+                        // TODO: WRONG ARGUMENTS ORDER ERROR
+                    }
                 } else {
                     if (REGEX == null){
                         REGEX = args[i];
                     } else if (INPUT_FILE == null){
                         INPUT_FILE = args[i];
                     } else {
-                        // TOO MANY ARGUMENTS ERROR
+                        error = true;
+                        // TODO: TOO MANY ARGUMENTS ERROR
                     }
                 }
 
                 i++;
             }
         } else {
-            System.out.println("no args");
+            error = true;
+            // TODO: NO ARGUMENTS ERROR
+        }
+
+        if(!error){
+            System.out.println("NFA_FILE: " + NFA_FILE);
+            System.out.println("DFA_FILE: " + DFA_FILE);
+            System.out.println("REGEX: " + REGEX);
+            System.out.println("INPUT_FILE: "+ INPUT_FILE);
+
+            RegexToNFA.NFA nfa = RegexToNFA.compile(REGEX);
+            nfa.display();
         }
 
     }
