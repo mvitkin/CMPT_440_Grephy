@@ -1,13 +1,14 @@
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Collections;
+import java.util.ArrayList;
 
 public class NFAToDFA {
 
     public static class Trans{
-        public ArrayList<Integer> states_from, states_to;
+        public HashSet<Integer> states_from, states_to;
         public char trans_symbol;
 
-        public Trans(ArrayList<Integer> v1, ArrayList<Integer> v2, char sym){
+        public Trans(HashSet<Integer> v1, HashSet<Integer> v2, char sym){
             this.states_from = v1;
             this.states_to = v2;
             this.trans_symbol = sym;
@@ -16,44 +17,50 @@ public class NFAToDFA {
 
     public static class DFA{
 
-        public ArrayList <ArrayList<Integer>> states;
+        public ArrayList <HashSet<Integer>> states;
         public ArrayList <Trans> transitions;
-        public ArrayList <ArrayList<Integer>> final_states;
+        public ArrayList <HashSet<Integer>> final_states;
         public RegexToNFA.NFA nfa;
         public ArrayList <Character> alphabet;
 
         public DFA(RegexToNFA.NFA nfa){
-            this.states = new ArrayList <ArrayList<Integer>> ();
+            this.states = new ArrayList <HashSet<Integer>> ();
             this.transitions = new ArrayList <Trans> ();
-            this.final_states = new ArrayList <ArrayList<Integer>> ();
+            this.final_states = new ArrayList <HashSet<Integer>> ();
             this.nfa = nfa;
             this.alphabet = nfa.generateAlphabet();
         }
 
-        public void epsClosure (ArrayList<Integer> state){
+        public void epsClosure (HashSet<Integer> stateSet){
+            ArrayList<Integer> state = new ArrayList<Integer>(stateSet);
             int i = 0;
             while (i < state.size()){
-                ArrayList<Integer> toState = this.nfa.findStatesFrom(state.get(i));
+                HashSet<Integer> toState = this.nfa.findStatesFrom(state.get(i));
 
                 for(int x : toState){
                     if(!state.contains(x)){
                         state.add(x);
                     }
                 }
+                i++;
             }
-            Collections.sort(state);
+            stateSet.clear();
+            for(int x : state){
+                stateSet.add(x);
+            }
         }
 
         public void generateStartState(){
-            ArrayList<Integer> startState = new ArrayList<Integer>();
+            HashSet<Integer> startState = new HashSet<Integer>();
             startState.add(this.nfa.states.get(0));
             epsClosure(startState);
+            this.states.add(startState);
         }
 
-        public void populateTransition(ArrayList<Integer> state, char c){
-            ArrayList<Integer> newState = new ArrayList<Integer>();
+        public void populateTransition(HashSet<Integer> state, char c){
+            HashSet<Integer> newState = new HashSet<Integer>();
             for (int i : state){
-                ArrayList<Integer> toState = this.nfa.findStatesFrom(i, c);
+                HashSet<Integer> toState = this.nfa.findStatesFrom(i, c);
 
                 for(int x : toState){
                     if(!newState.contains(x)){
@@ -63,15 +70,15 @@ public class NFAToDFA {
             }
 
             epsClosure(newState);
-            Collections.sort(newState);
-
-            if(!this.states.contains(newState)){
-                this.states.add(newState);
+            if(newState.size() > 0) {
+                if (!this.states.contains(newState)) {
+                    this.states.add(newState);
+                }
+                this.transitions.add(new Trans(state, newState, c));
             }
-            this.transitions.add(new Trans(state, newState, c));
         }
 
-        public void populateStateTransitions(ArrayList<Integer> state){
+        public void populateStateTransitions(HashSet<Integer> state){
             for(char c: this.alphabet){
                 populateTransition(state, c);
             }
@@ -79,7 +86,7 @@ public class NFAToDFA {
 
         public void display(){
             System.out.println("States: ");
-            for (ArrayList<Integer> state : this.states){
+            for (HashSet<Integer> state : this.states){
                 System.out.println(state);
             }
             System.out.println("Transitions: ");
@@ -87,7 +94,7 @@ public class NFAToDFA {
                 System.out.println("(" + t.states_from + ", " + t.trans_symbol + ") = " + t.states_to);
             }
             System.out.println("Accepting States: ");
-            for (ArrayList<Integer> state : this.final_states){
+            for (HashSet<Integer> state : this.final_states){
                 System.out.println(state);
             }
         }
@@ -103,7 +110,7 @@ public class NFAToDFA {
             i++;
         }
         // find accepting states
-        for(ArrayList<Integer> state : dfa.states){
+        for(HashSet<Integer> state : dfa.states){
             if(state.contains(dfa.nfa.final_state)){
                 dfa.final_states.add(state);
             }

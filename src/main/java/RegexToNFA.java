@@ -87,8 +87,8 @@ public class RegexToNFA {
             return s;
         }
 
-        public ArrayList<Integer> findStatesFrom (int state_from){
-            ArrayList<Integer> a = new ArrayList<Integer>();
+        public HashSet<Integer> findStatesFrom (int state_from){
+            HashSet<Integer> a = new HashSet<Integer>();
             for(int i = 0; i < this.transitions.size(); i++){
                 Trans t = this.transitions.get(i);
                 if(t.state_from == state_from){
@@ -100,8 +100,8 @@ public class RegexToNFA {
             return a;
         }
 
-        public ArrayList<Integer> findStatesFrom (int state_from, char sym){
-            ArrayList<Integer> a = new ArrayList<Integer>();
+        public HashSet<Integer> findStatesFrom (int state_from, char sym){
+            HashSet<Integer> a = new HashSet<Integer>();
             for(int i = 0; i < this.transitions.size(); i++){
                 Trans t = this.transitions.get(i);
                 if(t.state_from == state_from){
