@@ -5,16 +5,24 @@ public class RegexToNFA {
 
     /*
        Trans - object is used as a tuple of 3 items to depict transitions
-           (state from, symbol of tranistion path, state to)
+           (state from, symbol of transition path, state to)
    */
     public static class Trans{
         public int state_from, state_to;
         public char trans_symbol;
+        public boolean epsilon;
 
         public Trans(int v1, int v2, char sym){
             this.state_from = v1;
             this.state_to = v2;
             this.trans_symbol = sym;
+            this.epsilon = false;
+        }
+
+        public Trans(int v1, int v2){
+            this.state_from = v1;
+            this.state_to = v2;
+            this.epsilon = true;
         }
     }
 
@@ -53,11 +61,67 @@ public class RegexToNFA {
 
         public void display(){
             for (Trans t: transitions){
-                System.out.println("("+ t.state_from +", "+ t.trans_symbol +
-                        ") = "+ t.state_to);
+                if (!t.epsilon) {
+                    System.out.println("(" + t.state_from + ", " + t.trans_symbol +
+                            ") = " + t.state_to);
+                } else {
+                    System.out.println("(" + t.state_from + ", eps) = " + t.state_to);
+                }
             }
 
             System.out.println("Final State: " + final_state);
+        }
+
+        public String toString(){
+            String s = "";
+            for (Trans t: transitions){
+                if (!t.epsilon) {
+                    s = s + "(" + t.state_from + ", " + t.trans_symbol +
+                            ") = " + t.state_to;
+                } else {
+                    s = s + "(" + t.state_from + ", eps) = " + t.state_to;
+                }
+                s = s + "\n";
+            }
+            return s;
+        }
+
+        public ArrayList<Integer> findStatesFrom (int state_from){
+            ArrayList<Integer> a = new ArrayList<Integer>();
+            for(int i = 0; i < this.transitions.size(); i++){
+                Trans t = this.transitions.get(i);
+                if(t.state_from == state_from){
+                    if(t.epsilon){
+                        a.add(t.state_to);
+                    }
+                }
+            }
+            return a;
+        }
+
+        public ArrayList<Integer> findStatesFrom (int state_from, char sym){
+            ArrayList<Integer> a = new ArrayList<Integer>();
+            for(int i = 0; i < this.transitions.size(); i++){
+                Trans t = this.transitions.get(i);
+                if(t.state_from == state_from){
+                    if(t.trans_symbol == sym){
+                        a.add(t.state_to);
+                    }
+                }
+            }
+            return a;
+        }
+
+        public ArrayList<Character> generateAlphabet (){
+            ArrayList<Character> a = new ArrayList<Character>();
+            for(Trans t : this.transitions){
+                if(!t.epsilon) {
+                    if (!a.contains(t.trans_symbol)) {
+                        a.add(t.trans_symbol);
+                    }
+                }
+            }
+            return a;
         }
     }
 
@@ -67,23 +131,27 @@ public class RegexToNFA {
     */
     public static NFA kleene(NFA n){
         NFA result = new NFA(n.states.size()+2);
-        result.transitions.add(new Trans(0, 1, 'E')); // new trans for q0
+        result.transitions.add(new Trans(0, 1)); // new trans for q0
 
-        // copy existing transisitons
+        // copy existing transitions
         for (Trans t: n.transitions){
-            result.transitions.add(new Trans(t.state_from + 1,
-                    t.state_to + 1, t.trans_symbol));
+            if(!t.epsilon) {
+                result.transitions.add(new Trans(t.state_from + 1,
+                        t.state_to + 1, t.trans_symbol));
+            } else {
+                result.transitions.add(new Trans(t.state_from + 1,
+                        t.state_to + 1));
+            }
         }
 
         // add empty transition from final n state to new final state.
-        result.transitions.add(new Trans(n.states.size(),
-                n.states.size() + 1, 'E'));
+        result.transitions.add(new Trans(n.states.size(), n.states.size() + 1));
 
         // Loop back from last state of n to initial state of n.
-        result.transitions.add(new Trans(n.states.size(), 1, 'E'));
+        result.transitions.add(new Trans(n.states.size(), 1));
 
         // Add empty transition from new initial state to new final state.
-        result.transitions.add(new Trans(0, n.states.size() + 1, 'E'));
+        result.transitions.add(new Trans(0, n.states.size() + 1));
 
         result.final_state = n.states.size() + 1;
         return result;
@@ -98,11 +166,16 @@ public class RegexToNFA {
 
         // copy NFA m's transitions to n, and handles connecting n & m
         for (Trans t: m.transitions){
-            n.transitions.add(new Trans(t.state_from + n.states.size()-1,
-                    t.state_to + n.states.size() - 1, t.trans_symbol));
+            if(!t.epsilon) {
+                n.transitions.add(new Trans(t.state_from + n.states.size() - 1,
+                        t.state_to + n.states.size() - 1, t.trans_symbol));
+            } else {
+                n.transitions.add(new Trans(t.state_from + n.states.size() - 1,
+                        t.state_to + n.states.size() - 1));
+            }
         }
 
-        // take m and combine to n after erasing inital m state
+        // take m and combine to n after erasing initial m state
         for (Integer s: m.states){
             n.states.add(s + n.states.size() + 1);
         }
@@ -119,30 +192,40 @@ public class RegexToNFA {
         NFA result = new NFA(n.states.size() + m.states.size() + 2);
 
         // the branching of q0 to beginning of n
-        result.transitions.add(new Trans(0, 1, 'E'));
+        result.transitions.add(new Trans(0, 1));
 
         // copy existing transitions of n
         for (Trans t: n.transitions){
-            result.transitions.add(new Trans(t.state_from + 1,
-                    t.state_to + 1, t.trans_symbol));
+            if(!t.epsilon) {
+                result.transitions.add(new Trans(t.state_from + 1,
+                        t.state_to + 1, t.trans_symbol));
+            } else {
+                result.transitions.add(new Trans(t.state_from + 1,
+                        t.state_to + 1));
+            }
         }
 
         // transition from last n to final state
         result.transitions.add(new Trans(n.states.size(),
-                n.states.size() + m.states.size() + 1, 'E'));
+                n.states.size() + m.states.size() + 1));
 
         // the branching of q0 to beginning of m
-        result.transitions.add(new Trans(0, n.states.size() + 1, 'E'));
+        result.transitions.add(new Trans(0, n.states.size() + 1));
 
         // copy existing transitions of m
         for (Trans t: m.transitions){
-            result.transitions.add(new Trans(t.state_from + n.states.size()
-                    + 1, t.state_to + n.states.size() + 1, t.trans_symbol));
+            if(!t.epsilon) {
+                result.transitions.add(new Trans(t.state_from + n.states.size()
+                        + 1, t.state_to + n.states.size() + 1, t.trans_symbol));
+            } else {
+                result.transitions.add(new Trans(t.state_from + n.states.size()
+                        + 1, t.state_to + n.states.size() + 1));
+            }
         }
 
         // transition from last m to final state
         result.transitions.add(new Trans(m.states.size() + n.states.size(),
-                n.states.size() + m.states.size() + 1, 'E'));
+                n.states.size() + m.states.size() + 1));
 
         // 2 new states and shifted m to avoid repetition of last n & 1st m
         result.final_state = n.states.size() + m.states.size() + 1;
@@ -150,8 +233,8 @@ public class RegexToNFA {
     }
 
     // simplify the repeated boolean condition checks
-    public static boolean alpha(char c){ return c >= 'a' && c <= 'z';}
-    public static boolean alphabet(char c){ return alpha(c) || c == 'E';}
+    // public static boolean alpha(char c){ return (!regexOperator(c));}
+    public static boolean alphabet(char c){ return (!regexOperator(c));}
     public static boolean regexOperator(char c){
         return c == '(' || c == ')' || c == '*' || c == '|';
     }
@@ -257,8 +340,7 @@ public class RegexToNFA {
         }
         while (operators.size() > 0){
             if (operands.empty()){
-                System.out.println("Error: imbalance in operands and "
-                        + "operators");
+                System.out.println("Error: imbalance in operands and operators");
                 System.exit(1);
             }
             op = operators.pop();
