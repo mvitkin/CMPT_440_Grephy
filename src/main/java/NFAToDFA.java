@@ -7,11 +7,19 @@ public class NFAToDFA {
     public static class Trans{
         public HashSet<Integer> states_from, states_to;
         public char trans_symbol;
+        public boolean error;
 
         public Trans(HashSet<Integer> v1, HashSet<Integer> v2, char sym){
             this.states_from = v1;
             this.states_to = v2;
             this.trans_symbol = sym;
+            this.error = false;
+        }
+
+        public Trans(HashSet<Integer> v1, char sym){
+            this.states_from = v1;
+            this.trans_symbol = sym;
+            this.error = true;
         }
     }
 
@@ -75,6 +83,8 @@ public class NFAToDFA {
                     this.states.add(newState);
                 }
                 this.transitions.add(new Trans(state, newState, c));
+            } else {
+                this.transitions.add(new Trans(state, c));
             }
         }
 
@@ -91,7 +101,11 @@ public class NFAToDFA {
             }
             System.out.println("Transitions: ");
             for (Trans t: this.transitions){
-                System.out.println("(" + t.states_from + ", " + t.trans_symbol + ") = " + t.states_to);
+                if(!t.error) {
+                    System.out.println("(" + t.states_from + ", " + t.trans_symbol + ") = " + t.states_to);
+                } else {
+                    System.out.println("(" + t.states_from + ", " + t.trans_symbol + ") = error state");
+                }
             }
             System.out.println("Accepting States: ");
             for (HashSet<Integer> state : this.final_states){
