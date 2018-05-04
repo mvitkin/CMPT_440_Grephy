@@ -34,7 +34,8 @@ public class Grephy {
                     nfa_pw.write(nfa.toString());
                     System.out.println("File Written Successfully");
                     nfa_pw.close();
-                    System.out.println(nfa.toString());
+
+                    NFAToDFA(nfa);
                 }
 
             } catch (IOException ioe){
@@ -89,7 +90,8 @@ public class Grephy {
         return error;
     }
 
-    public static void NFAToDOT(RegexToNFA.NFA nfa){
-
+    public static void NFAToDFA(RegexToNFA.NFA nfa){
+         NFAToDFA.DFA dfa = NFAToDFA.generateDFA(nfa);
+         dfa.display();
     }
 }
