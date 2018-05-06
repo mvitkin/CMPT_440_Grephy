@@ -110,6 +110,7 @@ public class Grephy {
 
                 pw.println("digraph d{");
                 pw.print("node [shape = doublecircle]; " + nfa.final_state);
+                pw.println();
                 pw.println("node [shape = circle];");
 
                 for(RegexToNFA.Trans t: nfa.transitions){
