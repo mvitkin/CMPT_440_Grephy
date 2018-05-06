@@ -93,6 +93,16 @@ public class NFAToDFA {
             }
         }
 
+        public Trans findTrans(HashSet<Integer> startState, char sym){
+            for(Trans t: transitions){
+                if(t.states_from.equals(startState) && t.trans_symbol == sym){
+                    return t;
+                }
+            }
+
+            return new Trans(startState, sym); // error transition
+        }
+
         public void display(){
             System.out.println("States: ");
             for (HashSet<Integer> state : this.states){

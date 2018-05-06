@@ -3,7 +3,10 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.util.HashSet;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 public class Grephy {
 
@@ -11,17 +14,20 @@ public class Grephy {
 
         Grephy g = handleInput(args);
         g.nfa = RegexToNFA.compile(g.REGEX);
+        g.dfa = NFAToDFA.generateDFA(g.nfa);
 
         if(g.nfa.states.size() <= 0){
             System.exit(6);
         }
 
-        if(g.printDOTNFA()) {
-            g.dfa = NFAToDFA.generateDFA(g.nfa);
-            if(g.printDOTDFA()){
-
-            }
+        if(g.NFA_FILE != null){
+            g.printDOTNFA();
         }
+        if(g.DFA_FILE != null){
+            g.printDOTDFA();
+        }
+
+        g.parseInput();
     }
 
 
@@ -179,5 +185,53 @@ public class Grephy {
             return false;
         }
         return true;
+    }
+
+    public void parseInput(){
+        try {
+            BufferedReader bf = new BufferedReader(new FileReader(INPUT_FILE));
+
+            String line;
+            while((line = bf.readLine()) != null){
+                if(traverseDFA(line)){
+                    System.out.println(line);
+                }
+            }
+
+        } catch (IOException e){
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    public boolean traverseDFA(String s){
+        boolean accepts = false;
+        HashSet<Integer> curState = dfa.states.get(0);
+        NFAToDFA.Trans trans;
+
+        if(dfa.final_states.contains(curState)){
+            return true;
+        }
+
+        for (int i = 0; i < s.length(); i++){
+            char c = s.charAt(i);
+            if(dfa.alphabet.contains(c)){
+                trans = dfa.findTrans(curState, c);
+                if(trans.error){
+                    accepts = false;
+                    break;
+                } else {
+                    curState = trans.states_to;
+                }
+            } else {
+                accepts = false;
+                break;
+            }
+            if(dfa.final_states.contains(curState)){
+                accepts = true;
+            }
+        }
+
+        return accepts;
     }
 }
