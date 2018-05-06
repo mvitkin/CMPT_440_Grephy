@@ -3,52 +3,52 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashSet;
 
 public class Grephy {
 
-    public static String NFA_FILE;
-    public static String DFA_FILE;
-    public static String REGEX;
-    public static String INPUT_FILE;
-
     public static void main (String[] args){
 
-        if(!handleErrors(args)){
-            System.out.println("NFA_FILE: " + NFA_FILE);
-            System.out.println("DFA_FILE: " + DFA_FILE);
-            System.out.println("REGEX: " + REGEX);
-            System.out.println("INPUT_FILE: "+ INPUT_FILE);
+        Grephy g = handleInput(args);
+        g.nfa = RegexToNFA.compile(g.REGEX);
 
-            try {
-
-                File nfa_file = new File(NFA_FILE);
-
-                if (!nfa_file.exists()) {
-                   System.out.println("FILE DOES NOT EXIST");
-                } else {
-                    FileWriter nfa_fw = new FileWriter(nfa_file);
-                    BufferedWriter nfa_bw = new BufferedWriter(nfa_fw);
-                    PrintWriter nfa_pw = new PrintWriter(nfa_bw);
-
-                    RegexToNFA.NFA nfa = RegexToNFA.compile(REGEX);
-                    nfa_pw.write(nfa.toString());
-                    System.out.println("File Written Successfully");
-                    nfa_pw.close();
-
-                    NFAToDFA(nfa);
-                }
-
-            } catch (IOException ioe){
-                ioe.printStackTrace();
-            }
-
-
+        if(g.nfa.states.size() <= 0){
+            System.exit(6);
         }
+
+        if(g.printDOTNFA()) {
+            g.dfa = NFAToDFA.generateDFA(g.nfa);
+            if(g.printDOTDFA()){
+
+            }
+        }
+    }
+
+
+    public File NFA_FILE;
+    public File DFA_FILE;
+    public String REGEX;
+    public File INPUT_FILE;
+    public RegexToNFA.NFA nfa;
+    public NFAToDFA.DFA dfa;
+
+    public Grephy(String nfa_file, String dfa_file, String regex, String input_file ){
+        NFA_FILE = new File(nfa_file);
+        DFA_FILE = new File(dfa_file);
+        REGEX = regex;
+        INPUT_FILE = new File(input_file);
+        nfa = null;
+        dfa = null;
 
     }
 
-    public static boolean handleErrors(String[] args){
-        boolean error = false;
+    public static Grephy handleInput(String[] args){
+        boolean error =false;
+
+        String NFA_FILE = null;
+        String DFA_FILE = null;
+        String REGEX = null;
+        String INPUT_FILE = null;
 
         if (args.length > 0){
             int i = 0;
@@ -86,12 +86,98 @@ public class Grephy {
             error = true;
             // TODO: NO ARGUMENTS ERROR
         }
-
-        return error;
+        if(error) {
+            System.exit(2);
+        }
+        return new Grephy(NFA_FILE, DFA_FILE, REGEX, INPUT_FILE);
     }
 
-    public static void NFAToDFA(RegexToNFA.NFA nfa){
-         NFAToDFA.DFA dfa = NFAToDFA.generateDFA(nfa);
-         dfa.display();
+    public boolean printDOTNFA(){
+        try {
+            if (!NFA_FILE.exists()) {
+                System.out.println("NFA FILE DOES NOT EXIST");
+                return false;
+            } else {
+                FileWriter fw = new FileWriter(NFA_FILE);
+                BufferedWriter bw = new BufferedWriter(fw);
+                PrintWriter pw = new PrintWriter(bw);
+
+                pw.println("digraph d{");
+                pw.print("node [shape = doublecircle]; " + nfa.final_state);
+                pw.println("node [shape = circle];");
+
+                for(RegexToNFA.Trans t: nfa.transitions){
+                    if(!t.epsilon) {
+                        pw.println("\t" + t.state_from + " -> " + t.state_to + " [label=" + t.trans_symbol + "];");
+                    } else {
+                        pw.println("\t" + t.state_from + " -> " + t.state_to + " [label=\"eps\"];");
+                    }
+                }
+
+                pw.println("}");
+
+                System.out.println("NFA File Written Successfully");
+                pw.close();
+            }
+        } catch (IOException ioe){
+            ioe.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public boolean printDOTDFA(){
+        try {
+            if (!DFA_FILE.exists()) {
+                System.out.println("DFA FILE DOES NOT EXIST");
+                return false;
+            } else {
+                FileWriter fw = new FileWriter(DFA_FILE);
+                BufferedWriter bw = new BufferedWriter(fw);
+                PrintWriter pw = new PrintWriter(bw);
+
+                pw.println("digraph g{");
+                pw.print("node [shape = doublecircle]; ");
+
+                for(HashSet<Integer> set : dfa.final_states){
+                    pw.print("\"" + set + "\" ");
+                }
+                pw.println();
+
+                pw.println("node [shape = circle];");
+
+                for(NFAToDFA.Trans t: dfa.transitions){
+                    if(!t.error) {
+                        pw.println("\t\"" + t.states_from + "\" -> \"" + t.states_to + "\" [label=" + t.trans_symbol + "];");
+                    } else {
+                        pw.println("\t\"" + t.states_from + "\" -> \"error\" [label=" + t.trans_symbol + "];");
+                    }
+                }
+
+                for(NFAToDFA.Trans t: dfa.transitions){
+                    if(t.error){
+                        pw.print("\t\"error\" -> \"error\" [label=\"");
+                        for(int i = 0; i < dfa.alphabet.size(); i++){
+                            pw.print(dfa.alphabet.get(i));
+                            if(i < dfa.alphabet.size()-1){
+                                pw.print(", ");
+                            }
+                        }
+                        pw.print("\"];");
+                        pw.println();
+                        break;
+                    }
+                }
+
+                pw.println("}");
+
+                System.out.println("DFA File Written Successfully");
+                pw.close();
+            }
+        } catch (IOException ioe){
+            ioe.printStackTrace();
+            return false;
+        }
+        return true;
     }
 }
