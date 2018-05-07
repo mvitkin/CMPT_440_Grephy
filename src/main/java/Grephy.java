@@ -100,22 +100,31 @@ public class Grephy {
             System.exit(2);
         }
 
-        File input_file = new File(INPUT_FILE);
-        File nfa_file = new File(NFA_FILE);
-        File dfa_file = new File(DFA_FILE);
-        if(!input_file.exists()) {
-            System.out.println("File \"" + INPUT_FILE + "\" does not exist.");
-            System.exit(2);
-        }
-        if(!nfa_file.exists()){
-            System.out.println("File \"" + NFA_FILE + "\" does not exist.");
-            System.exit(2);
-        }
-        if(!dfa_file.exists()){
-            System.out.println("File \"" + DFA_FILE + "\" does not exist.");
-            System.exit(2);
-        }
+        File input_file = null;
+        File dfa_file = null;
+        File nfa_file = null;
 
+        if(INPUT_FILE != null){
+            input_file = new File(INPUT_FILE);
+            if(!input_file.exists()) {
+                System.out.println("File \"" + INPUT_FILE + "\" does not exist.");
+                System.exit(2);
+            }
+        }
+        if(NFA_FILE != null){
+            nfa_file = new File(NFA_FILE);
+            if(!nfa_file.exists()){
+                System.out.println("File \"" + NFA_FILE + "\" does not exist.");
+                System.exit(2);
+            }
+        }
+        if(DFA_FILE != null){
+            dfa_file = new File(DFA_FILE);
+            if(!dfa_file.exists()){
+                System.out.println("File \"" + DFA_FILE + "\" does not exist.");
+                System.exit(2);
+            }
+        }
         return new Grephy(nfa_file, dfa_file, REGEX, input_file);
     }
 
@@ -124,9 +133,14 @@ public class Grephy {
     }
 
     public boolean printDOTNFA(){
+
+        if(NFA_FILE == null){
+            return false;
+        }
+
         try {
             if (!NFA_FILE.exists()) {
-                System.out.println("NFA FILE DOES NOT EXIST");
+                System.out.println("NFA file does not exist.");
                 return false;
             } else {
                 FileWriter fw = new FileWriter(NFA_FILE);
@@ -157,9 +171,14 @@ public class Grephy {
     }
 
     public boolean printDOTDFA(){
+
+        if(DFA_FILE == null){
+            return false;
+        }
+
         try {
             if (!DFA_FILE.exists()) {
-                System.out.println("DFA FILE DOES NOT EXIST");
+                System.out.println("DFA file does not exist.");
                 return false;
             } else {
                 FileWriter fw = new FileWriter(DFA_FILE);
