@@ -38,11 +38,11 @@ public class Grephy {
     public RegexToNFA.NFA nfa;
     public NFAToDFA.DFA dfa;
 
-    public Grephy(String nfa_file, String dfa_file, String regex, String input_file ){
-        NFA_FILE = new File(nfa_file);
-        DFA_FILE = new File(dfa_file);
+    public Grephy(File nfa_file, File dfa_file, String regex, File input_file ){
+        NFA_FILE = nfa_file;
+        DFA_FILE = dfa_file;
         REGEX = regex;
-        INPUT_FILE = new File(input_file);
+        INPUT_FILE = input_file;
         nfa = null;
         dfa = null;
 
@@ -65,7 +65,8 @@ public class Grephy {
                         NFA_FILE = args[i];
                     } else {
                         error = true;
-                        // TODO: DOUBLE ARGUMENT ERROR
+                        System.out.println("Invalid Arguments");
+                        printHelp();
                     }
                 } else if(args[i].equals("-d")){
                     if(DFA_FILE == null){
@@ -73,7 +74,8 @@ public class Grephy {
                         DFA_FILE = args[i];
                     } else {
                         error = true;
-                        // TODO: DOUBLE ARGUMENT ERROR
+                        System.out.println("Invalid Arguments");
+                        printHelp();
                     }
                 } else {
                     if (REGEX == null){
@@ -82,7 +84,8 @@ public class Grephy {
                         INPUT_FILE = args[i];
                     } else {
                         error = true;
-                        // TODO: TOO MANY ARGUMENTS ERROR
+                        System.out.println("Invalid Arguments");
+                        printHelp();
                     }
                 }
 
@@ -90,12 +93,34 @@ public class Grephy {
             }
         } else {
             error = true;
-            // TODO: NO ARGUMENTS ERROR
+            System.out.println("No arguments detected");
+            printHelp();
         }
         if(error) {
             System.exit(2);
         }
-        return new Grephy(NFA_FILE, DFA_FILE, REGEX, INPUT_FILE);
+
+        File input_file = new File(INPUT_FILE);
+        File nfa_file = new File(NFA_FILE);
+        File dfa_file = new File(DFA_FILE);
+        if(!input_file.exists()) {
+            System.out.println("File \"" + INPUT_FILE + "\" does not exist.");
+            System.exit(2);
+        }
+        if(!nfa_file.exists()){
+            System.out.println("File \"" + NFA_FILE + "\" does not exist.");
+            System.exit(2);
+        }
+        if(!dfa_file.exists()){
+            System.out.println("File \"" + DFA_FILE + "\" does not exist.");
+            System.exit(2);
+        }
+
+        return new Grephy(nfa_file, dfa_file, REGEX, input_file);
+    }
+
+    public static void printHelp(){
+        System.out.println("usage: java -jar Grephy.jar [-n NFA FILE] [-d DFA FILE] [REGEX] [INPUT FILE]");
     }
 
     public boolean printDOTNFA(){
@@ -122,8 +147,6 @@ public class Grephy {
                 }
 
                 pw.println("}");
-
-                System.out.println("NFA File Written Successfully");
                 pw.close();
             }
         } catch (IOException ioe){
@@ -177,8 +200,6 @@ public class Grephy {
                 }
 
                 pw.println("}");
-
-                System.out.println("DFA File Written Successfully");
                 pw.close();
             }
         } catch (IOException ioe){
@@ -209,10 +230,6 @@ public class Grephy {
         boolean accepts = false;
         HashSet<Integer> curState = dfa.states.get(0);
         NFAToDFA.Trans trans;
-
-        if(dfa.final_states.contains(curState)){
-            return true;
-        }
 
         for (int i = 0; i < s.length(); i++){
             char c = s.charAt(i);

@@ -154,7 +154,7 @@ public class RegexToNFA {
         // Add empty transition from new initial state to new final state.
         result.transitions.add(new Trans(0, n.states.size() + 1));
 
-        result.final_state = n.states.size() + 1;
+        result.final_state = result.states.size() - 1;
         return result;
     }
 
@@ -181,7 +181,7 @@ public class RegexToNFA {
             n.states.add(s + n.states.size() + 1);
         }
 
-        n.final_state = n.states.size() + m.states.size() - 2;
+        n.final_state = n.states.size() - 1;
         return n;
     }
 
